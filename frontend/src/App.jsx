@@ -5,8 +5,10 @@ import { Navigate } from "react-router-dom";
 import LoadingSpinner from "../components/LodingSipnner";
 import { useAuthStore } from "../store/authStore";
 import EmailVerification from "./pages/EmailVerification";
+import ForgetPassword from "./pages/ForgetPassword";
 import Home from "./pages/Home";
 import LoginPage from "./pages/LoginPage";
+import ResetPassword from "./pages/ResetPassword";
 import SignUpPage from "./pages/SignUpPage";
 
 const ProtectedRoute = ({ children }) => {
@@ -69,6 +71,22 @@ function App() {
           }
         />
         <Route path="/verify-email" element={<EmailVerification />} />
+        <Route
+          path="/forget-password"
+          element={
+            <RedirectAuthenticatedUser>
+              <ForgetPassword />
+            </RedirectAuthenticatedUser>
+          }
+        />
+        <Route
+          path="/reset-password/:token"
+          element={
+            <RedirectAuthenticatedUser>
+              <ResetPassword />
+            </RedirectAuthenticatedUser>
+          }
+        />
       </Routes>
       <Toaster />
     </div>

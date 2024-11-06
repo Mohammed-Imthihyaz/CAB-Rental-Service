@@ -45,7 +45,7 @@ const LoginPage = () => {
             />
             <div className="flex items-ce
              mb-6">
-              <Link to='/forgot-password' className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500 ">
+              <Link to='/forget-password' className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500 ">
               Frogot Password?
               </Link>
             </div>
