@@ -1,10 +1,10 @@
 
-import crypto from "crypto";
 import bcryptjs from "bcryptjs";
+import crypto from "crypto";
 
-import {User} from "../models/user.model.js";
-import {generateTokenAndSetCookie} from "./utils/generateTokenAndSetCookie.js";
-import { sendVerificationEmail,sendRestEmail,sendResetSuccessEmail } from "../nodemailer/emails.js";
+import { User } from "../models/user.model.js";
+import { sendResetSuccessEmail, sendRestEmail, sendVerificationEmail } from "../nodemailer/emails.js";
+import { generateTokenAndSetCookie } from "./utils/generateTokenAndSetCookie.js";
 
 export const signup=async(req,res)=>{
 
@@ -107,7 +107,7 @@ export const logout=async(req,res)=>{
 
 }
 
-export const forgotpassword=async (req,res)=>{
+export const forgetpassword=async (req,res)=>{
     const {email} =req.body;
     try{
         const user =await User.findOne({email});
@@ -164,7 +164,8 @@ export const resetPassword=async(req,res)=>{
            });
 
     }catch(error){
-
+        console.log("Error in resetPassword ", error);
+		res.status(400).json({ success: false, message: error.message });
     }
 }
 export const checkAuth = async (req, res) => {
