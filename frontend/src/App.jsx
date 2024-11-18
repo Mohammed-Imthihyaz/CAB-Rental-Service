@@ -4,12 +4,13 @@ import { Route, Routes } from "react-router";
 import { Navigate } from "react-router-dom";
 import LoadingSpinner from "../components/LodingSipnner";
 import { useAuthStore } from "../store/authStore";
-import EmailVerification from "./pages/EmailVerification";
-import ForgetPassword from "./pages/ForgetPassword";
-import Home from "./pages/Home";
-import LoginPage from "./pages/LoginPage";
-import ResetPassword from "./pages/ResetPassword";
-import SignUpPage from "./pages/SignUpPage";
+import EmailVerification from "./AuthPages/EmailVerification.jsx";
+import ForgetPassword from "./AuthPages/ForgetPassword.jsx";
+import LoginPage from "./AuthPages/LoginPage.jsx";
+import ResetPassword from "./AuthPages/ResetPassword.jsx";
+import SignUpPage from "./AuthPages/SignUpPage.jsx";
+import BookingForm from "./HomePage/BookingForm";
+import Home from "./HomePage/Home";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user, isCheckingAuth } = useAuthStore();
@@ -44,7 +45,7 @@ function App() {
   if (isCheckingAuth) return <LoadingSpinner />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-blue-100 flex items-center justify-center relative overflow-hidden">
+    <>
       <Routes>
         <Route
           path="/"
@@ -53,7 +54,13 @@ function App() {
               <Home />
             </ProtectedRoute>
           }
-        />
+        >
+          {/* Default redirect to /duties */}
+          <Route path="/" element={<Navigate to="/duties" />} />
+          <Route path="duties" element={<BookingForm />} />
+          <Route path="operations" element={<div>Item Two</div>} />
+          <Route path="payment-gateway" element={<div>Item Three</div>} />
+        </Route>
         <Route
           path="/signup"
           element={
@@ -89,7 +96,7 @@ function App() {
         />
       </Routes>
       <Toaster />
-    </div>
+    </>
   );
 }
 
