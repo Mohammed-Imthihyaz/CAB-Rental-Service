@@ -2,73 +2,64 @@ import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
-import PropTypes from "prop-types";
-import * as React from "react";
-import BookingForm from "./BookingForm";
-
-function CustomTabPanel(props) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-    </div>
-  );
-}
-
-CustomTabPanel.propTypes = {
-  children: PropTypes.node,
-  index: PropTypes.number.isRequired,
-  value: PropTypes.number.isRequired,
-};
-
-function a11yProps(index) {
-  return {
-    id: `simple-tab-${index}`,
-    "aria-controls": `simple-tabpanel-${index}`,
-  };
-}
+import React, { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function NavBar() {
-  const [value, setValue] = React.useState(0);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Sync the active tab with the current route
+  const getTabIndex = (path) => {
+    switch (path) {
+      case "/duties":
+        return 0;
+      case "/operations":
+        return 1;
+      case "/payment-gateway":
+        return 2;
+      default:
+        return 0;
+    }
+  };
+
+  const [value, setValue] = React.useState(getTabIndex(location.pathname));
+
+  useEffect(() => {
+    setValue(getTabIndex(location.pathname));
+  }, [location.pathname]);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
+    const routes = ["/duties", "/operations", "/payment-gateway"];
+    navigate(routes[newValue]);
   };
 
   return (
-    <Box sx={{ width: "100%",flexGrow: 1 }}>
-      <Grid container sx={{}} >
-        <Grid item xs={2} sx={{  display: 'flex', justifyContent: 'center', alignItems: 'center' , color:'#fffff'}}>
-        <img
-          src="../../images/logo.jpg"
-          style={{ height:50 }}
-        />
+    <Box sx={{ width: "100%", flexGrow: 1 }}>
+      <Grid container>
+        <Grid
+          item
+          xs={2}
+          sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+        >
+          <img
+            src="../../images/logo.jpg"
+            alt="Logo"
+            style={{ height: 50 }}
+          />
         </Grid>
-        <Grid item xs={10} sx={{  }}>
-          <Tabs value={value} onChange={handleChange} aria-label="basic tabs example" sx={{ bgcolor: 'rgba(236, 236, 236,0.7)' }}
->
-            <Tab label="Duties" {...a11yProps(0)} />
-            <Tab label="Operations" {...a11yProps(1)} />
-            <Tab label="Paymet Gateway" {...a11yProps(2)} />
+        <Grid item xs={10}>
+          <Tabs
+            value={value}
+            onChange={handleChange}
+            aria-label="basic tabs example"
+            sx={{ bgcolor: "rgba(236, 236, 236,0.7)" }}
+          >
+            <Tab label="Duties" />
+            <Tab label="Operations" />
+            <Tab label="Payment Gateway" />
           </Tabs>
-        </Grid>
-        <Grid item xs={12}>
-          <CustomTabPanel value={value} index={0}>
-         <BookingForm/>
-          </CustomTabPanel>
-          <CustomTabPanel value={value} index={1}>
-            Item Two
-          </CustomTabPanel>
-          <CustomTabPanel value={value} index={2}>
-            Item Three
-          </CustomTabPanel>
         </Grid>
       </Grid>
     </Box>

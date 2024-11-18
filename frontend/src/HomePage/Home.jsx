@@ -1,17 +1,14 @@
-import React from 'react';
-import { Route, Routes } from "react-router";
-import NavBar from './NavBar';
+import React from "react";
+import { Outlet } from "react-router-dom";
+import NavBar from "./NavBar";
 
 const Home = () => {
   return (
-    <div >
-    <Routes >
-      <Route path='/' element={<NavBar/>}>
-      </Route>
-    </Routes>
-  
-  </div>
-  )
-}
+    <div>
+      <NavBar />
+      <Outlet /> {/* Renders the nested routes */}
+    </div>
+  );
+};
 
-export default Home
+export default Home;
