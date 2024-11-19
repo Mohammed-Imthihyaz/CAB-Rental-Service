@@ -74,27 +74,16 @@ const price = [
     required: true,
   },
 ];
-
-const initialPassengers = [
+const bookingAgent = [
   {
-    label: "Book by name",
-    name: "firstName",
+    label: "Booked By Name",
+    name: "AgentName",
     defaultValue: "",
     required: true,
   },
   {
-    label: "Book by email",
-    name: "email",
-    defaultValue: "",
-    required: true,
-    validate: (value) => {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return emailRegex.test(value) ? "" : "Invalid email format";
-    },
-  },
-  {
-    label: "Book by phone",
-    name: "phone",
+    label: "Booked By Phone Number",
+    name: "AgentPhone",
     defaultValue: "",
     required: true,
     validate: (value) => {
@@ -102,6 +91,19 @@ const initialPassengers = [
       return phoneRegex.test(value) ? "" : "Phone number must be 10 digits";
     },
   },
+  {
+    label: "Booked By email",
+    name: "AgentEmail",
+    defaultValue: "",
+    required: true,
+    validate: (value) => {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(value) ? "" : "Invalid email format";
+    },
+  },
+];
+
+const initialPassengers = [
   {
     label: "Passenger Name",
     name: "passengerName",
@@ -142,7 +144,7 @@ const CabDetails = () => {
     pricePerKM: "",
     pricePerHR: "",
   });
-  const [garageTime, setGarageTime] = useState("");
+  const [garageTime, setGarageTime] = useState(0);
   const [addressData, setAddressData] = useState(
     address.reduce((acc, field) => ({ ...acc, [field.name]: "" }), {})
   );
@@ -155,6 +157,12 @@ const CabDetails = () => {
       return acc;
     }, {})
   );
+  const[bookedAgent,setBookedAgent]=useState(
+    bookingAgent.reduce((acc, field) => {
+      acc[field.name] = field.defaultValue;
+      return acc;
+    }, {})
+  );
   const [totalPrice, setTotalPrice] = useState(null);
   const [errors, setErrors] = useState({});
   const [customer, setCustomer] = useState("");
@@ -163,6 +171,13 @@ const CabDetails = () => {
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+  const handleAgentChange = (event) => {
+    const { name, value } = event.target;
+    setBookedAgent((prevData) => ({
       ...prevData,
       [name]: value,
     }));
@@ -373,6 +388,7 @@ const CabDetails = () => {
         priceFormData,
         totalPrice,
         passengers: formData,
+        bookedAgent: formData
       };
       navigate('/operations');
       
@@ -434,6 +450,23 @@ const CabDetails = () => {
               </Typography>
             </Grid>
             <Grid container spacing={2}>
+            {bookingAgent.map((field,index)=>(
+                <Grid item xs={12} sm={4} key={`${field.name}-${index}`}>
+                <FormControl fullWidth error={!!errors[field.name]}>
+                  <TextField
+                    label={field.label}
+                    name={field.name}
+                    value={bookedAgent[field.name] || ""}
+                    onChange={handleAgentChange}
+                    required={field.required}
+                    error={!!errors[field.name]}
+                    helperText={errors[field.name] || ""}
+                  />
+                  
+                </FormControl>
+              </Grid>
+              ))}
+              
               {passengers.map((field, index) => (
                 <Grid item xs={12} sm={4} key={`${field.name}-${index}`}>
                   <FormControl fullWidth error={!!errors[field.name]}>
