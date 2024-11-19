@@ -4,6 +4,7 @@ import { connectDB } from "./db/connectDB.js";
 
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.route.js";
+import bookingRoutes from "./routes/booking.route.js";
 
 const app = express();
 const PORT = process.env.PORT|| 5000;
@@ -14,6 +15,7 @@ app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(express.json()); // Corrected to use parentheses
 app.use(cookieParser());
 app.use("/api/auth", authRoutes); // Un-comment this if you want to use auth routes
+app.use("/api/bookings",bookingRoutes)//importing booking routes
 
 app.get('/', (req, res) => {
     res.status(200).send("Welcome to root URL of Server");
