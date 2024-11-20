@@ -20,6 +20,7 @@ import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import dayjs from "dayjs";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useBookingStore } from "../../store/bookingStore.js";
 import NewCustomer from "./NewCustomer";
 
 const cityOptions = [
@@ -157,7 +158,8 @@ const CabDetails = () => {
       return acc;
     }, {})
   );
-  const[bookedAgent,setBookedAgent]=useState(
+  const[bookedAgent,setBookedAgent]=useState(bookingAgent);
+  const[formbookedData,setformbookedData]=useState(
     bookingAgent.reduce((acc, field) => {
       acc[field.name] = field.defaultValue;
       return acc;
@@ -167,6 +169,7 @@ const CabDetails = () => {
   const [errors, setErrors] = useState({});
   const [customer, setCustomer] = useState("");
   const navigate=useNavigate();
+  const {isLoading ,newBooking} =useBookingStore();
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -177,7 +180,7 @@ const CabDetails = () => {
   };
   const handleAgentChange = (event) => {
     const { name, value } = event.target;
-    setBookedAgent((prevData) => ({
+    setformbookedData((prevData) => ({
       ...prevData,
       [name]: value,
     }));
@@ -342,6 +345,17 @@ const CabDetails = () => {
         }
       }
     });
+    bookedAgent.forEach((field) => {
+      const value = formbookedData[field.name];
+      if (field.required && !value) {
+        newErrors[field.name] = `${field.label} is required`;
+      } else if (field.validate && value) {
+        const validationError = field.validate(value);
+        if (validationError) {
+          newErrors[field.name] = validationError;
+        }
+      }
+    });
 
     // Validate garage time
     if (!garageTime) {
@@ -373,30 +387,35 @@ const CabDetails = () => {
     );
   };
 
-  const handleSubmit = () => {
-    if (validateForm()) {
-      const bookingData = {
-        customer,
-        selectedCities,
-        startDate: startDate.format(),
-        endDate: endDate.format(),
-        repTime: repTime.format(),
-        estTime: estTime.format(),
-        garageTime,
-        addressData,
-        bill,
-        priceFormData,
-        totalPrice,
-        passengers: formData,
-        bookedAgent: formData
-      };
-      navigate('/operations');
+  const handleSubmit = async(e) => {
+    e.preventDefault();
+    try{
       
-      console.log("Booking submitted:", bookingData);
-      // Here you would typically make an API call to save the booking
+      if (validateForm()) {
+        const bookingData = {
+          customer,
+          selectedCities,
+          startDate: startDate.format(),
+          endDate: endDate.format(),
+          repTime: repTime.format(),
+          estTime: estTime.format(),
+          garageTime,
+          addressData,
+          bill,
+          priceFormData,
+          totalPrice,
+          passengers: formData,
+          bookedAgent: formbookedData,
+        };
+        await newBooking(bookingData);
+        navigate('/operations');
+        console.log("Booking submitted:", bookingData);
+        // Here you would typically make an API call to save the booking
+      }
+    }catch(error){
+      console.error("Error in booking submission:", error.response?.data || error.message);
     }
   };
-
   return (
     <>
     <br></br>
@@ -456,7 +475,7 @@ const CabDetails = () => {
                   <TextField
                     label={field.label}
                     name={field.name}
-                    value={bookedAgent[field.name] || ""}
+                    value={formbookedData[field.name] || ""}
                     onChange={handleAgentChange}
                     required={field.required}
                     error={!!errors[field.name]}
