@@ -27,7 +27,6 @@ const bookingSchema = new mongoose.Schema({
   totalPrice: { type: Number },
   passengers: [
     {
-
       passengerEmail: { type: String, required: true },
       passengerName: { type: String, required: true },
       passengerPhone: { type: String, required: true },
