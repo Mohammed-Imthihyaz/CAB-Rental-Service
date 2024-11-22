@@ -11,6 +11,7 @@ import ResetPassword from "./AuthPages/ResetPassword.jsx";
 import SignUpPage from "./AuthPages/SignUpPage.jsx";
 import BookingForm from "./HomePage/BookingForm";
 import Home from "./HomePage/Home";
+import OperationsDetails from "./HomePage/operations/operations";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user, isCheckingAuth } = useAuthStore();
@@ -58,7 +59,7 @@ function App() {
           {/* Default redirect to /duties */}
           <Route path="/" element={<Navigate to="/duties" />} />
           <Route path="duties" element={<BookingForm />} />
-          <Route path="operations" element={<div>Item Two</div>} />
+          <Route path="operations" element={<OperationsDetails/>} />
           <Route path="payment-gateway" element={<div>Item Three</div>} />
         </Route>
         <Route
