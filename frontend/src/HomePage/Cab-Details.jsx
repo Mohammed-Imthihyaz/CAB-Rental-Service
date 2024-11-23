@@ -1,10 +1,13 @@
 import {
+  Alert,
   Button,
+  CircularProgress,
   FormControl,
   FormHelperText,
   InputLabel,
   MenuItem,
   NativeSelect,
+  Snackbar,
   TextField,
   Typography,
 } from "@mui/material";
@@ -20,6 +23,7 @@ import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import dayjs from "dayjs";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useBookingStore } from "../../store/bookingStore.js";
 import NewCustomer from "./NewCustomer";
 
 const cityOptions = [
@@ -74,27 +78,16 @@ const price = [
     required: true,
   },
 ];
-
-const initialPassengers = [
+const bookingAgent = [
   {
-    label: "Book by name",
-    name: "firstName",
+    label: "Booked By Name",
+    name: "AgentName",
     defaultValue: "",
     required: true,
   },
   {
-    label: "Book by email",
-    name: "email",
-    defaultValue: "",
-    required: true,
-    validate: (value) => {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return emailRegex.test(value) ? "" : "Invalid email format";
-    },
-  },
-  {
-    label: "Book by phone",
-    name: "phone",
+    label: "Booked By Phone Number",
+    name: "AgentPhone",
     defaultValue: "",
     required: true,
     validate: (value) => {
@@ -102,6 +95,19 @@ const initialPassengers = [
       return phoneRegex.test(value) ? "" : "Phone number must be 10 digits";
     },
   },
+  {
+    label: "Booked By email",
+    name: "AgentEmail",
+    defaultValue: "",
+    required: true,
+    validate: (value) => {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(value) ? "" : "Invalid email format";
+    },
+  },
+];
+
+const initialPassengers = [
   {
     label: "Passenger Name",
     name: "passengerName",
@@ -142,7 +148,7 @@ const CabDetails = () => {
     pricePerKM: "",
     pricePerHR: "",
   });
-  const [garageTime, setGarageTime] = useState("");
+  const [garageTime, setGarageTime] = useState(0);
   const [addressData, setAddressData] = useState(
     address.reduce((acc, field) => ({ ...acc, [field.name]: "" }), {})
   );
@@ -155,14 +161,40 @@ const CabDetails = () => {
       return acc;
     }, {})
   );
+  const [passengersList, setPassengersList] = useState([{
+    passengerName: "",
+    passengerPhone: "",
+    passengerEmail: "",
+  }]);
+  const[bookedAgent,setBookedAgent]=useState(bookingAgent);
+  const[formbookedData,setformbookedData]=useState(
+    bookingAgent.reduce((acc, field) => {
+      acc[field.name] = field.defaultValue;
+      return acc;
+    }, {})
+  );
   const [totalPrice, setTotalPrice] = useState(null);
   const [errors, setErrors] = useState({});
   const [customer, setCustomer] = useState("");
-  const navigate=useNavigate();
+  const navigate = useNavigate();
+  const { isLoading, error, message, newBooking, resetState } = useBookingStore();
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const handleSnackbarClose = () => {
+    setShowSuccessMessage(false);
+    resetState();
+  };
 
-  const handleChange = (event) => {
+  const handlePassengerChange = (index, field, value) => {
+    const updatedPassengers = [...passengersList];
+    updatedPassengers[index] = {
+      ...updatedPassengers[index],
+      [field]: value,
+    };
+    setPassengersList(updatedPassengers);
+  };
+  const handleAgentChange = (event) => {
     const { name, value } = event.target;
-    setFormData((prevData) => ({
+    setformbookedData((prevData) => ({
       ...prevData,
       [name]: value,
     }));
@@ -188,54 +220,43 @@ const CabDetails = () => {
     setGarageTime(event.target.value);
   };
 
-  const addPassenger = () => {
-    const newPassengerFields = [
+   const addPassenger = () => {
+    setPassengersList([
+      ...passengersList,
       {
-        label: "Passenger Name",
-        name: `passengerName${passengers.length}`,
-        defaultValue: "",
-        required: true,
+        passengerName: "",
+        passengerPhone: "",
+        passengerEmail: "",
       },
-      {
-        label: "Passenger Phone Number",
-        name: `passengerPhone${passengers.length}`,
-        defaultValue: "",
-        required: true,
-        validate: (value) => {
-          const phoneRegex = /^\d{10}$/;
-          return phoneRegex.test(value) ? "" : "Phone number must be 10 digits";
-        },
-      },
-      {
-        label: "Passenger email",
-        name: `passengerEmail${passengers.length}`,
-        defaultValue: "",
-        required: true,
-        validate: (value) => {
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          return emailRegex.test(value) ? "" : "Invalid email format";
-        },
-      },
-    ];
-
-    setPassengers((prev) => [...prev, ...newPassengerFields]);
+    ]);
   };
 
   const removePassenger = () => {
-    if (passengers.length > initialPassengers.length) {
-      setPassengers((prev) => prev.slice(0, -3));
-      // Clean up form data and errors for removed fields
-      const newFormData = { ...formData };
-      const newErrors = { ...errors };
-      const removedFields = passengers.slice(-3);
-      removedFields.forEach((field) => {
-        delete newFormData[field.name];
-        delete newErrors[field.name];
-      });
-      setFormData(newFormData);
-      setErrors(newErrors);
+    if (passengersList.length > 1) {
+      setPassengersList(passengersList.slice(0, -1));
     }
   };
+
+  const validatePassengers = () => {
+    const passengerErrors = {};
+    passengersList.forEach((passenger, index) => {
+      if (!passenger.passengerName) {
+        passengerErrors[`passenger${index}Name`] = "Passenger name is required";
+      }
+      if (!passenger.passengerPhone) {
+        passengerErrors[`passenger${index}Phone`] = "Phone number is required";
+      } else if (!/^\d{10}$/.test(passenger.passengerPhone)) {
+        passengerErrors[`passenger${index}Phone`] = "Phone number must be 10 digits";
+      }
+      if (!passenger.passengerEmail) {
+        passengerErrors[`passenger${index}Email`] = "Email is required";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(passenger.passengerEmail)) {
+        passengerErrors[`passenger${index}Email`] = "Invalid email format";
+      }
+    });
+    return passengerErrors;
+  };
+
 
   const handlePriceChange = (event) => {
     const { name, value } = event.target;
@@ -314,10 +335,12 @@ const CabDetails = () => {
         newErrors[city.name] = `${city.label} is required`;
       }
     });
+    const passengerErrors = validatePassengers();
+    Object.assign(newErrors, passengerErrors);
 
     // Validate passenger fields
-    passengers.forEach((field) => {
-      const value = formData[field.name];
+    bookedAgent.forEach((field) => {
+      const value = formbookedData[field.name];
       if (field.required && !value) {
         newErrors[field.name] = `${field.label} is required`;
       } else if (field.validate && value) {
@@ -358,37 +381,58 @@ const CabDetails = () => {
     );
   };
 
-  const handleSubmit = () => {
-    if (validateForm()) {
-      const bookingData = {
-        customer,
-        selectedCities,
-        startDate: startDate.format(),
-        endDate: endDate.format(),
-        repTime: repTime.format(),
-        estTime: estTime.format(),
-        garageTime,
-        addressData,
-        bill,
-        priceFormData,
-        totalPrice,
-        passengers: formData,
-      };
-      navigate('/operations');
-      
-      console.log("Booking submitted:", bookingData);
-      // Here you would typically make an API call to save the booking
+  const handleSubmit = async(e) => {
+    e.preventDefault();
+    try {
+      if (validateForm()) {
+        const bookingData = {
+          customer,
+          selectedCities,
+          startDate: startDate.format(),
+          endDate: endDate.format(),
+          repTime: repTime.format(),
+          estTime: estTime.format(),
+          garageTime,
+          addressData,
+          bill,
+          priceFormData,
+          totalPrice,
+          passengers: passengersList,
+          bookedAgent: formbookedData,
+        };
+
+        await newBooking(bookingData);
+        setShowSuccessMessage(true);
+        setTimeout(() => {
+          navigate('/operations');
+        }, 2000);
+       }
+    } catch(error) {
+      console.error("Error in booking submission:", error);
     }
   };
-
   return (
     <>
-    <br></br>
-      <Typography variant="h4" gutterBottom sx={{ color: "#ff3350" , paddingLeft:2}}>
+     <br />
+      <Typography variant="h4" gutterBottom sx={{ color: "#ff3350", paddingLeft: 2 }}>
         NEW BOOKING
       </Typography>
-      
       <Divider sx={{ bgcolor: "black.light", padding:1}} />
+      {error && (
+        <Alert severity="error" sx={{ mt: 2, mx: 2 }}>
+          {error}
+        </Alert>
+      )}
+       <Snackbar
+        open={showSuccessMessage}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={handleSnackbarClose} severity="success">
+          Booking created successfully!
+        </Alert>
+      </Snackbar>
       <Box sx={{ flexGrow: 2, paddingTop: 3, padding: 5 ,paddingLeft: "4.5rem" }}>
         <Grid container spacing={4}>
           <Grid item xs={8}>
@@ -434,21 +478,62 @@ const CabDetails = () => {
               </Typography>
             </Grid>
             <Grid container spacing={2}>
-              {passengers.map((field, index) => (
+            {bookingAgent.map((field,index)=>(
                 <Grid item xs={12} sm={4} key={`${field.name}-${index}`}>
-                  <FormControl fullWidth error={!!errors[field.name]}>
-                    <TextField
-                      label={field.label}
-                      name={field.name}
-                      value={formData[field.name] || ""}
-                      onChange={handleChange}
-                      required={field.required}
-                      error={!!errors[field.name]}
-                      helperText={errors[field.name] || ""}
-                    />
-                  </FormControl>
-                </Grid>
+                <FormControl fullWidth error={!!errors[field.name]}>
+                  <TextField
+                    label={field.label}
+                    name={field.name}
+                    value={formbookedData[field.name] || ""}
+                    onChange={handleAgentChange}
+                    required={field.required}
+                    error={!!errors[field.name]}
+                    helperText={errors[field.name] || ""}
+                  />
+                  
+                </FormControl>
+              </Grid>
               ))}
+        {passengersList.map((passenger, index) => (
+          <React.Fragment key={index}>
+            <Grid item xs={12} sm={4}>
+              <FormControl fullWidth error={!!errors[`passenger${index}Name`]}>
+                <TextField
+                  label="Passenger Name"
+                  value={passenger.passengerName}
+                  onChange={(e) => handlePassengerChange(index, 'passengerName', e.target.value)}
+                  required
+                  error={!!errors[`passenger${index}Name`]}
+                  helperText={errors[`passenger${index}Name`]}
+                />
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <FormControl fullWidth error={!!errors[`passenger${index}Phone`]}>
+                <TextField
+                  label="Passenger Phone Number"
+                  value={passenger.passengerPhone}
+                  onChange={(e) => handlePassengerChange(index, 'passengerPhone', e.target.value)}
+                  required
+                  error={!!errors[`passenger${index}Phone`]}
+                  helperText={errors[`passenger${index}Phone`]}
+                />
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <FormControl fullWidth error={!!errors[`passenger${index}Email`]}>
+                <TextField
+                  label="Passenger Email"
+                  value={passenger.passengerEmail}
+                  onChange={(e) => handlePassengerChange(index, 'passengerEmail', e.target.value)}
+                  required
+                  error={!!errors[`passenger${index}Email`]}
+                  helperText={errors[`passenger${index}Email`]}
+                />
+              </FormControl>
+            </Grid>
+          </React.Fragment>
+        ))}
               <Grid item xs={10}>
                 <Button variant="outlined" onClick={addPassenger}>
                   + ADD ANOTHER PASSENGER
@@ -636,15 +721,17 @@ const CabDetails = () => {
               </Grid>
 
               <Grid item xs={12}>
-                <Button
-                  variant="contained"
-                  color="success"
-                  onClick={handleSubmit}
-                  size="large"
-                >
-                  Book
-                </Button>
-              </Grid>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={handleSubmit}
+            size="large"
+            disabled={isLoading}
+            startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : null}
+          >
+            {isLoading ? 'Booking...' : 'Book'}
+          </Button>
+        </Grid>
             </Grid>
           </Box>
         </Grid>

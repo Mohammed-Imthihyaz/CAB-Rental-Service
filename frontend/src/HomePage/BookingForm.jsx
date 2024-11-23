@@ -8,10 +8,10 @@ export default function BookingForm() {
   
   return (
     <>
-     
           <Grid item xs={12}>
             <CabDetails />
           </Grid>
+          
     </>
   );
 }
